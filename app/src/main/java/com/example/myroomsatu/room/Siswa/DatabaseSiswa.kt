@@ -5,21 +5,30 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-class DatabaseSiswa {
-    @Database(entities = [Siswa::class], version = 1, exportSchema = false)
-    abstract class  DatabaseSiswa : RoomDatabase(){
-        abstract fun siswaDao() : SiswaDao
+@Database(
+    entities = [Siswa::class],
+    version = 2,
+    exportSchema = false
+)
+abstract class DatabaseSiswa : RoomDatabase() {
 
-        companion object {
-            private var Instance: DatabaseSiswa? = null
+    abstract fun siswaDao(): SiswaDao
 
-            fun getDatabase(context: Context): DatabaseSiswa {
-                return (Instance?: synchronized(this){
-                    Room.databaseBuilder(
-                        context, DatabaseSiswa::class.java,
-                        "siswa_database")
-                        .build().also { Instance=it }
-                })
+    companion object {
+        @Volatile
+        private var Instance: DatabaseSiswa? = null
+
+        fun getDatabase(context: Context): DatabaseSiswa {
+            return Instance ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    DatabaseSiswa::class.java,
+                    "siswa_database"
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                Instance = instance
+                instance
             }
         }
     }
